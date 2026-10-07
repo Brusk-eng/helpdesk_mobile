@@ -60,10 +60,16 @@ create it by calling `helpdesk_push.api.create_oauth_client`, and the app then
 reads the client ID from the site on its own.
 
 Otherwise create it by hand: search "OAuth Client" in desk and add one with app name
-`Helpdesk Mobile`, scopes `all openid`, redirect URI `helpdesk://oauth/callback`,
-grant type Authorization Code, response type Code, and token endpoint auth method
-`None`. The client ID is the document name, and the app asks for it on the login
-screen when the site does not publish one.
+`Helpdesk Mobile`, scopes `all openid`, grant type Authorization Code, response type
+Code, and token endpoint auth method `None`. Set both Redirect URIs and Default
+Redirect URI to `helpdesk://oauth/callback`. The site matches Redirect URIs exactly,
+so leaving it empty or adding a trailing slash fails the sign in with "Mismatching
+redirect URI". The client ID is the document name, and the app asks for it on the
+login screen when the site does not publish one.
+
+<p>
+  <img src="screenshots/oauth-client.png" width="80%" alt="OAuth Client form with both redirect fields set" />
+</p>
 
 Access tokens expire after an hour; the app refreshes them in the background, so
 you stay signed in. Signing out revokes the token on the site.
