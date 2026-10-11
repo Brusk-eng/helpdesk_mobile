@@ -15,7 +15,9 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.test.core.app.ApplicationProvider
 import io.github.kaulith.helpdeskanalytics.data.local.preferences.PreferencesManager
+import io.github.kaulith.helpdeskanalytics.data.local.profiles.ProfileStore
 import io.github.kaulith.helpdeskanalytics.notifications.NotificationHelper
+import io.github.kaulith.helpdeskanalytics.domain.model.SiteProfile
 import io.github.kaulith.helpdeskanalytics.testing.FakeAgentRepository
 import io.github.kaulith.helpdeskanalytics.testing.FakeAuthRepository
 import io.github.kaulith.helpdeskanalytics.testing.FakeTicketRepository
@@ -43,7 +45,7 @@ class SettingsScreenTest {
         val context = ApplicationProvider.getApplicationContext<Application>()
         val authRepository = FakeAuthRepository()
         val viewModel = SettingsViewModel(
-            PreferencesManager(context),
+            PreferencesManager(context, ProfileStore(context)),
             FakeTicketRepository(),
             authRepository,
             credentialsManager(context),
@@ -60,11 +62,31 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun `picking another site switches to it`() {
+        val context = ApplicationProvider.getApplicationContext<Application>()
+        val authRepository = FakeAuthRepository().apply {
+            otherSites = listOf(SiteProfile("helpdesk-mb", "https://helpdesk-mb.fsn.frappe.cloud"))
+        }
+        val viewModel = SettingsViewModel(
+            PreferencesManager(context, ProfileStore(context)),
+            FakeTicketRepository(),
+            authRepository,
+            credentialsManager(context),
+            FakeAgentRepository()
+        )
+        composeRule.setContent { SettingsScreen(viewModel = viewModel) }
+
+        composeRule.onNodeWithText("helpdesk-mb.fsn.frappe.cloud").performClick()
+
+        composeRule.waitUntil { authRepository.siteSwitchedTo == "helpdesk-mb" }
+    }
+
+    @Test
     fun `send test notification posts one`() {
         val context = ApplicationProvider.getApplicationContext<Application>()
         shadowOf(context).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
         val viewModel = SettingsViewModel(
-            PreferencesManager(context),
+            PreferencesManager(context, ProfileStore(context)),
             FakeTicketRepository(),
             FakeAuthRepository(),
             credentialsManager(context),
@@ -87,7 +109,7 @@ class SettingsScreenTest {
         NotificationHelper(context).showNotification(title = "New ticket assigned #77595", body = "making pdf")
         assertEquals(1, notifications.allNotifications.size)
         val viewModel = SettingsViewModel(
-            PreferencesManager(context),
+            PreferencesManager(context, ProfileStore(context)),
             FakeTicketRepository(),
             FakeAuthRepository(),
             credentialsManager(context),
